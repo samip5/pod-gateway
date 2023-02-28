@@ -25,6 +25,7 @@ bind-interfaces
 
 # Dynamic IPs assigned to PODs - we keep a range for static IPs
 dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
+dhcp-range=${VXLAN_IPv6_NETWORK}::30,slaac
 
 # For debugging purposes, log each DNS query as it passes through
 # dnsmasq.
@@ -58,6 +59,8 @@ done
 
 # Make a copy of /etc/resolv.conf
 /bin/copy_resolv.sh
+
+cat /etc/dnsmasq.d/pod-gateway.conf
 
 # Dnsmasq daemon
 dnsmasq -k &
