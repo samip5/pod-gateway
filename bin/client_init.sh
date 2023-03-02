@@ -113,8 +113,8 @@ else
 fi
 
 if [[ -z "$NAT6_ENTRY" ]]; then
-  echo "Get dynamic IPv6"
-  dhclient -v -6 vxlan0
+  echo "Dynamic IPv6 address fetching is currently broken. Not trying."
+  # dhclient -v -6 vxlan0
 else
   IP=$(cut -d' ' -f2 <<< "$NAT6_ENTRY")
   VXLAN_IPv6="${VXLAN_IPv6_NETWORK}::${IP}"
