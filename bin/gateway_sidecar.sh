@@ -23,9 +23,12 @@ cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
 interface=vxlan0
 bind-interfaces
 
+enable-ra
+ra-param=vxlan0,3600,1800
+
 # Dynamic IPs assigned to PODs - we keep a range for static IPs
 dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
-dhcp-range=${VXLAN_IPv6_NETWORK}::30,slaac
+dhcp-range=::20,::200,constructor:vxlan0,slaac
 
 # For debugging purposes, log each DNS query as it passes through
 # dnsmasq.
