@@ -45,3 +45,8 @@ CONNECTION_RETRY_COUNT=1
 
 # If you use nftables for iptables you need to set this to yes
 IPTABLES_NFT=no
+
+# If you want IPv6, enable it
+IPV6_ENABLED=false
+# If you instead want to enable IPv4
+IPV4_ENABLED=true
