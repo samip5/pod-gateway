@@ -15,12 +15,12 @@ if [ "${IPTABLES_NFT:-no}" = "yes" ];then
 fi
 
 
-if [ "$IPV6_ENABLED" == "true" ] && ["$IPV4_ENABLED" == "true"]; then
+if [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "true" ]; then
   configureIPv4
   configureIPv6
-elif [ "$IPV6_ENABLED" == "true"]  && ["$IPV4_ENABLED" == "false"]; then
+elif [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "false" ]; then
   configureIPv6
-elif [ "$IPV6_ENABLED" == "false" ]  && ["$IPV4_ENABLED" == "true"]; then
+elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
   configureIPv4
 fi
 
@@ -80,7 +80,6 @@ function configureIPv4() {
       # command might fail if rule already set
       ip route add "$local_cidr" via "$K8S_GW_IP" || /bin/true
     done
-  fi
 }
 
 function configureIPv6() {
@@ -91,7 +90,7 @@ function configureIPv6() {
     fi
     # Create VXLAN NIC
     VXLAN_GATEWAY_IP6="${VXLAN_IPv6_NETWORK}::1"
-    if [ "$IPV6_ENABLED" == "true"  && "$IPV4_ENABLED" == "false"]; then
+    if [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "false" ]; then
       ip link add vxlan0 type vxlan id $VXLAN_ID dev eth0 dstport 0 || true
       ip link set up dev vxlan0
     fi

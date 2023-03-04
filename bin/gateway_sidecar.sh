@@ -17,7 +17,7 @@ fi
 #Get K8S DNS
 K8S_DNS=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
 
-if [ "$IPV6_ENABLED" == "true" && "$IPV4_ENABLED" == "true"]; then
+if [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "true" ]; then
   cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
   # DHCP server settings
   interface=vxlan0
@@ -53,12 +53,13 @@ if [ "$IPV6_ENABLED" == "true" && "$IPV4_ENABLED" == "true"]; then
   resolv-file=${RESOLV_CONF_COPY}
 EOF
 
-for local_cidr in $DNS_LOCAL_CIDRS; do
-  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Send ${local_cidr} DNS queries to the K8S DNS server
-  server=/${local_cidr}/${K8S_DNS}
+  for local_cidr in $DNS_LOCAL_CIDRS; do
+    cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+    # Send ${local_cidr} DNS queries to the K8S DNS server
+    server=/${local_cidr}/${K8S_DNS}
 EOF
-elif [ "$IPV6_ENABLED" == "true"  && "$IPV4_ENABLED" == "false"]; then
+  done
+elif [ "$IPV6_ENABLED" == "true" ]  && [ "$IPV4_ENABLED" == "false" ]; then
   cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
     # DHCP server settings
     interface=vxlan0
@@ -98,9 +99,9 @@ for local_cidr in $DNS_LOCAL_CIDRS; do
   # Send ${local_cidr} DNS queries to the K8S DNS server
   server=/${local_cidr}/${K8S_DNS}
 EOF
-done
+  done
 
-elif [ "$IPV6_ENABLED" == "false"  && "$IPV4_ENABLED" == "true"]; then
+elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
   cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
       # DHCP server settings
       interface=vxlan0
@@ -140,7 +141,7 @@ for local_cidr in $DNS_LOCAL_CIDRS; do
   # Send ${local_cidr} DNS queries to the K8S DNS server
   server=/${local_cidr}/${K8S_DNS}
 EOF
-done
+  done
 fi
 
 # Make a copy of /etc/resolv.conf

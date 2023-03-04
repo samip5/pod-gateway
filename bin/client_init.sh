@@ -12,7 +12,7 @@ cat /config/settings.sh
 # on first entry set a routing rule to the k8s DNS server
 if ip addr | grep -q vxlan0; then
   ip link del vxlan0
-elif [ "$IPV6_ENABLED" == "true"] && ["$IPV4_ENABLED" == "true"]; then
+elif [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "true" ]; then
   echo "Asked for dual-stack, enabling both."
   K8S_GW_IP=$(/sbin/ip route | awk '/default/ { print $3 }')
   K8S_GW_IPv6=$(/sbin/ip -6 route | awk '/default/ { print $3 }')
@@ -30,7 +30,7 @@ elif [ "$IPV6_ENABLED" == "true"] && ["$IPV4_ENABLED" == "true"]; then
   echo "Deleting existing default GWs"
   configureIPv4
   configureIPv6
-elif [ "$IPV6_ENABLED" == "true" ]  && [ "$IPV4_ENABLED" == "false"]; then
+elif [ "$IPV6_ENABLED" == "true" ]  && [ "$IPV4_ENABLED" == "false" ]; then
   echo "Asked for IPv6-only mode, so be it."
   K8S_GW_IPv6=$(/sbin/ip -6 route | awk '/default/ { print $3 }')
   if [[ $K8S_GW_IPv6 == fe80:* ]]; then
@@ -41,7 +41,7 @@ elif [ "$IPV6_ENABLED" == "true" ]  && [ "$IPV4_ENABLED" == "false"]; then
   done
   echo "Deleting existing default GWs"
   configureIPv6
-elif [ "$IPV6_ENABLED" == "false" ] && ["$IPV4_ENABLED" == "true"]; then
+elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
   K8S_GW_IP=$(/sbin/ip route | awk '/default/ { print $3 }')
   for local_cidr in $NOT_ROUTED_TO_GATEWAY_CIDRS; do
       # command might fail if rule already set
@@ -120,7 +120,7 @@ function configureIPv6() {
     ping6 -c "${CONNECTION_RETRY_COUNT}" "$VXLAN_GATEWAY_IPv6"
 
     # Create tunnel NIC via IPv6 when IPv4 is disabled
-    if [ "$IPV4_ENABLED" == "false"]; then
+    if [ "$IPV4_ENABLED" == "false" ]; then
       ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 || true
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPv6" dev vxlan0
       ip link set up dev vxlan0
