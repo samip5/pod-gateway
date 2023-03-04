@@ -52,7 +52,7 @@ elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
 fi
 
 
-function configureIPv4() {
+function configureIPv4 {
     ip route del 0/0 || /bin/true
 
     # After this point nothing should be reachable -> check
@@ -90,7 +90,7 @@ function configureIPv4() {
     getIPv4Address
 }
 
-function configureIPv6() {
+function configureIPv6 {
     ip -6 r del default || /bin/true
 
     if ping -6 -c 1 -W 1000 2001:4860:4860::8888; then
