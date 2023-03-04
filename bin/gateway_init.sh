@@ -24,7 +24,7 @@ elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
   configureIPv4
 fi
 
-function configureIPv4() {
+function configureIPv4 {
     # Enable IP forwarding
     if [[ $(cat /proc/sys/net/ipv4/ip_forward) -ne 1 ]]; then
         echo "ip_forward is not enabled; enabling."
@@ -82,7 +82,7 @@ function configureIPv4() {
     done
 }
 
-function configureIPv6() {
+function configureIPv6 {
     # Enable IPv6 forwarding
     if [[ $(cat /proc/sys/net/ipv6/conf/all/forwarding) -ne 1 ]]; then
         echo "ipv6.conf.all.forwarding is not enabled; enabling."

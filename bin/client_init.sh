@@ -150,7 +150,7 @@ interface "vxlan0"
  }
 EOF
 
-function getIPv4Address() {
+function getIPv4Address {
   # Configure IP and default GW though the gateway docker
   if [[ -z "$NAT_ENTRY" ]]; then
     echo "Get dynamic IP"
@@ -171,7 +171,7 @@ function getIPv4Address() {
   ping -c "${CONNECTION_RETRY_COUNT}" "$VXLAN_GATEWAY_IP"
 }
 
-function getIPv6Address() {
+function getIPv6Address {
     if [[ -z "$NAT6_ENTRY" ]]; then
       echo "Trying to get dynamic IPv6 address"
       dhclient -v -6 vxlan0
