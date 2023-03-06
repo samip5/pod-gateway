@@ -112,7 +112,10 @@ function configureIPV4 {
       ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 || true
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IP" dev vxlan0
     else
-
+      GATEWAY_IPV6="$(dig AAAA +short "$GATEWAY_NAME" "@${K8S_DNS_IP}")"
+      ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 group ff05::100|| true
+      bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPv6" dev vxlan0
+    fi
     ip link set up dev vxlan0
 
     # Configure IP and default GW though the gateway docker
@@ -178,11 +181,12 @@ else
   fi
 fi
 
-if [ "$IPV4_ENABLED" == "true" ]; then
+if [ "$IPV4_ENABLED" == "true" ] && [ "$IPV6_ENABLED" == "true" ]; then
   configureIPV4
-fi
-
-if [ "$IPV6_ENABLED" == "true" ]; then
+  configureIPV6
+elif [ "$IPV4_ENABLED" == "true" ] && [ "$IPV6_ENABLED" == "false" ]; then
+  configureIPV4
+elif [ "$IPV4_ENABLED" == "false" ] && [ "$IPV6_ENABLED" == "true" ]; then
   configureIPV6
 fi
 
