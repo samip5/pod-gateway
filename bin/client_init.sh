@@ -51,6 +51,8 @@ function configureIPV6 {
       ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 group ff05::100 || true
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6"  dev vxlan0
       ip link set up dev vxlan0
+    else
+      bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6"  dev vxlan0
     fi
 
     if [[ -z "$NAT6_ENTRY" ]]; then
