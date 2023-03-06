@@ -114,7 +114,7 @@ function configureIPV4 {
     else
       GATEWAY_IPV6="$(dig AAAA +short "$GATEWAY_NAME" "@${K8S_DNS_IP}")"
       ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 group ff05::100|| true
-      bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPv6" dev vxlan0
+      bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6" dev vxlan0
     fi
     ip link set up dev vxlan0
 
