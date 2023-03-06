@@ -17,132 +17,51 @@ fi
 #Get K8S DNS
 K8S_DNS=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
 
-if [ "$IPV6_ENABLED" == "true" ] && [ "$IPV4_ENABLED" == "true" ]; then
-  cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
-  # DHCP server settings
-  interface=vxlan0
-  bind-interfaces
-
-  enable-ra
-  ra-param=vxlan0,3600,1800
-
-  # Dynamic IPs assigned to PODs - we keep a range for static IPs
-  dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
-  dhcp-range=::20,::200,constructor:vxlan0,slaac
-
-  # For debugging purposes, log each DNS query as it passes through
-  # dnsmasq.
-  log-queries
-
-  # Log lots of extra information about DHCP transactions.
-  log-dhcp
-
-  # Log to stdout
-  log-facility=-
-
-  # Clear DNS cache on reload
-  clear-on-reload
-
-  # Enable DNSSEC validation and caching
-  conf-file=/usr/share/dnsmasq/trust-anchors.conf
-  dnssec
-
-  # /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
-  # and dnsmasq monitors directories only
-  # copy_resolv.sh is used to copy the file on changes
-  resolv-file=${RESOLV_CONF_COPY}
-EOF
-
-  for local_cidr in $DNS_LOCAL_CIDRS; do
-    cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-    # Send ${local_cidr} DNS queries to the K8S DNS server
-    server=/${local_cidr}/${K8S_DNS}
-EOF
-  done
-elif [ "$IPV6_ENABLED" == "true" ]  && [ "$IPV4_ENABLED" == "false" ]; then
-  cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
-    # DHCP server settings
-    interface=vxlan0
-    bind-interfaces
-
-    enable-ra
-    ra-param=vxlan0,3600,1800
-
-    # Dynamic IPs assigned to PODs - we keep a range for static IPs
-    dhcp-range=::20,::200,constructor:vxlan0,slaac
-
-    # For debugging purposes, log each DNS query as it passes through
-    # dnsmasq.
-    log-queries
-
-    # Log lots of extra information about DHCP transactions.
-    log-dhcp
-
-    # Log to stdout
-    log-facility=-
-
-    # Clear DNS cache on reload
-    clear-on-reload
-
-    # Enable DNSSEC validation and caching
-    conf-file=/usr/share/dnsmasq/trust-anchors.conf
-    dnssec
-
-    # /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
-    # and dnsmasq monitors directories only
-    # copy_resolv.sh is used to copy the file on changes
-    resolv-file=${RESOLV_CONF_COPY}
-EOF
-
-for local_cidr in $DNS_LOCAL_CIDRS; do
-  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Send ${local_cidr} DNS queries to the K8S DNS server
-  server=/${local_cidr}/${K8S_DNS}
-EOF
-  done
-
-elif [ "$IPV6_ENABLED" == "false" ] && [ "$IPV4_ENABLED" == "true" ]; then
-  cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
-      # DHCP server settings
-      interface=vxlan0
-      bind-interfaces
-
-      enable-ra
-      ra-param=vxlan0,3600,1800
-
-      # Dynamic IPs assigned to PODs - we keep a range for static IPs
-      dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
-
-      # For debugging purposes, log each DNS query as it passes through
-      # dnsmasq.
-      log-queries
-
-      # Log lots of extra information about DHCP transactions.
-      log-dhcp
-
-      # Log to stdout
-      log-facility=-
-
-      # Clear DNS cache on reload
-      clear-on-reload
-
-      # Enable DNSSEC validation and caching
-      conf-file=/usr/share/dnsmasq/trust-anchors.conf
-      dnssec
-
-      # /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
-      # and dnsmasq monitors directories only
-      # copy_resolv.sh is used to copy the file on changes
-      resolv-file=${RESOLV_CONF_COPY}
-EOF
-
-for local_cidr in $DNS_LOCAL_CIDRS; do
-  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Send ${local_cidr} DNS queries to the K8S DNS server
-  server=/${local_cidr}/${K8S_DNS}
-EOF
-  done
+DHCPv4_RANGE=""
+DHCPv6_RANGE=""
+if [ "$IPV4_ENABLED" == "true" ]; then
+  DHCPv4_RANGE="dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h"
 fi
+if [ "$IPV6_ENABLED" == "true" ]; then
+  DHCPv6_RANGE="dhcp-range=::20,::200,constructor:vxlan0,slaac"
+fi
+
+cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
+# DHCP server settings
+interface=vxlan0
+bind-interfaces
+enable-ra
+ra-param=vxlan0,3600,1800
+# Dynamic IPs assigned to PODs - we keep a range for static IPs
+${DHCPv4_RANGE}
+# Do not send default route in RA.
+dhcp-option=option:router
+dhcp-option=3,${VXLAN_IP_NETWORK}.1
+# ${DHCPv6_RANGE}
+# For debugging purposes, log each DNS query as it passes through
+# dnsmasq.
+log-queries
+# Log lots of extra information about DHCP transactions.
+log-dhcp
+# Log to stdout
+log-facility=-
+# Clear DNS cache on reload
+clear-on-reload
+# Enable DNSSEC validation and caching
+conf-file=/usr/share/dnsmasq/trust-anchors.conf
+dnssec
+# /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
+# and dnsmasq monitors directories only
+# copy_resolv.sh is used to copy the file on changes
+resolv-file=${RESOLV_CONF_COPY}
+EOF
+
+for local_cidr in $DNS_LOCAL_CIDRS; do
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+  # Send ${local_cidr} DNS queries to the K8S DNS server
+  server=/${local_cidr}/${K8S_DNS}
+EOF
+done
 
 # Make a copy of /etc/resolv.conf
 /bin/copy_resolv.sh
@@ -160,11 +79,11 @@ inotifyd=$!
 
 _kill_procs() {
   echo "Signal received -> killing processes"
-  
+
   kill -TERM $dnsmasq || /bin/true
   wait $dnsmasq
   rc=$?
-  
+
   kill -TERM $inotifyd || /bin/true
   wait $inotifyd
 
