@@ -47,14 +47,20 @@ log-dhcp
 log-facility=-
 # Clear DNS cache on reload
 clear-on-reload
-# Enable DNSSEC validation and caching
-conf-file=/usr/share/dnsmasq/trust-anchors.conf
-dnssec
+
 # /etc/resolv.conf cannot be monitored by dnsmasq since it is in a different file system
 # and dnsmasq monitors directories only
 # copy_resolv.sh is used to copy the file on changes
 resolv-file=${RESOLV_CONF_COPY}
 EOF
+
+if [[ ${GATEWAY_ENABLE_DNSSEC} == true ]]; then
+cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+  # Enable DNSSEC validation and caching
+  conf-file=/usr/share/dnsmasq/trust-anchors.conf
+  dnssec
+EOF
+fi
 
 for local_cidr in $DNS_LOCAL_CIDRS; do
   cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf

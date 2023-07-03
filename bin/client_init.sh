@@ -138,7 +138,6 @@ function configureIPV4 {
 cat << EOF > /etc/dhclient.conf
 backoff-cutoff 2;
 initial-interval 1;
-link-timeout 10;
 reboot 0;
 retry 10;
 select-timeout 0;
