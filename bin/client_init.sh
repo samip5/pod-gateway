@@ -52,6 +52,7 @@ function configureIPV6 {
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6"  dev vxlan0
       ip link set up dev vxlan0
     else
+      bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IP"  dev vxlan0
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6"  dev vxlan0
     fi
 
@@ -117,6 +118,8 @@ function configureIPV4 {
       bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IPV6" dev vxlan0
     fi
     ip link set up dev vxlan0
+
+    ip addr show
 
     # Configure IP and default GW though the gateway docker
     if [[ -z "$NAT_ENTRY" ]]; then

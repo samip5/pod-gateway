@@ -36,7 +36,6 @@ ra-param=vxlan0,3600,1800
 ${DHCPv4_RANGE}
 # Do not send default route in RA.
 dhcp-option=option:router
-dhcp-option=3,${VXLAN_IP_NETWORK}.1
 # ${DHCPv6_RANGE}
 # For debugging purposes, log each DNS query as it passes through
 # dnsmasq.
