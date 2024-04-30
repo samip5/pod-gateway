@@ -34,9 +34,9 @@ function configureIPV6 {
 
     NAT6_ENTRY=""
     if [ -f /config/nat6.conf ]; then
-        NAT6_ENTRY="$(grep $STRIPPED_HOSTNAME /config/nat6.conf || true)"
+        NAT6_ENTRY="$(grep $"^$(STRIPPED_HOSTNAME) " /config/nat6.conf || true)"
     elif [ -f /config/nat.conf ]; then
-        NAT6_ENTRY="$(grep $STRIPPED_HOSTNAME /config/nat.conf || true)"
+        NAT6_ENTRY="$(grep $"^$(STRIPPED_HOSTNAME) " /config/nat.conf || true)"
     fi
 
     # Make sure there is correct route for gateway
@@ -96,7 +96,7 @@ function configureIPV4 {
     GATEWAY_IP="$(dig +short "$GATEWAY_NAME" "@${K8S_DNS_IP}")"
     STRIPPED_HOSTNAME="$(hostname | cut -d '-' -f 1)"
 
-    NAT_ENTRY="$(grep $STRIPPED_HOSTNAME /config/nat.conf || true)"
+    NAT_ENTRY="$(grep $"^$(STRIPPED_HOSTNAME) " /config/nat.conf || true)"
 
     # Make sure there is correct route for gateway
     # K8S_GW_IP is not set when script is called again and the route should still exist on the pod anyway.

@@ -33,6 +33,7 @@ if ip addr | grep -q vxlan0; then
 fi
 
 
+
 if [ "$IPV4_ENABLED" == "true" ]; then
   # Enable IP forwarding
   if [[ $(cat /proc/sys/net/ipv4/ip_forward) -ne 1 ]]; then
