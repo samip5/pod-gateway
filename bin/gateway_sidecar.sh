@@ -17,25 +17,33 @@ fi
 #Get K8S DNS
 K8S_DNS=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
 
+DHCPv4_RANGE=""
+DHCPv6_RANGE=""
+if [ "$IPV4_ENABLED" == "true" ]; then
+  DHCPv4_RANGE="dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h"
+fi
+if [ "$IPV6_ENABLED" == "true" ]; then
+  DHCPv6_RANGE="dhcp-range=::20,::200,constructor:vxlan0,slaac"
+fi
 
 cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
 # DHCP server settings
 interface=vxlan0
 bind-interfaces
-
+enable-ra
+ra-param=vxlan0,3600,1800
 # Dynamic IPs assigned to PODs - we keep a range for static IPs
-dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
-
+${DHCPv4_RANGE}
+# Do not send default route in RA.
+dhcp-option=option:router
+# ${DHCPv6_RANGE}
 # For debugging purposes, log each DNS query as it passes through
 # dnsmasq.
 log-queries
-
 # Log lots of extra information about DHCP transactions.
 log-dhcp
-
 # Log to stdout
 log-facility=-
-
 # Clear DNS cache on reload
 clear-on-reload
 
@@ -63,6 +71,8 @@ done
 # Make a copy of /etc/resolv.conf
 /bin/copy_resolv.sh
 
+cat /etc/dnsmasq.d/pod-gateway.conf
+
 # Dnsmasq daemon
 dnsmasq -k &
 dnsmasq=$!
@@ -74,11 +84,11 @@ inotifyd=$!
 
 _kill_procs() {
   echo "Signal received -> killing processes"
-  
+
   kill -TERM $dnsmasq || /bin/true
   wait $dnsmasq
   rc=$?
-  
+
   kill -TERM $inotifyd || /bin/true
   wait $inotifyd
 
