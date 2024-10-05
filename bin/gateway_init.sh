@@ -84,6 +84,9 @@ if [[ -n "$VPN_INTERFACE" ]]; then
     done
   done </config/nat.conf
 
+  echo "Allow DHCP traffic from vxlan"
+  iptables -A INPUT -i vxlan0 -p udp --sport=68 --dport=67 -j ACCEPT
+
   echo "Setting iptables for VPN with NIC ${VPN_INTERFACE}"
   # Firewall incomming traffic from VPN
   echo "Accept traffic alredy ESTABLISHED"
