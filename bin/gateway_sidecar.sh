@@ -14,9 +14,9 @@ if [ ! -f /etc/resolv.conf.org ]; then
   echo "/etc/resolv.conf.org written"
 fi
 
-# Get K8S DNS if not set
+# Get K8S DNS if not set (only IPv4 addresses)
 if [ -z "$DNS_LOCAL_SERVER" ]; then
-  DNS_LOCAL_SERVER=$(grep nameserver /etc/resolv.conf.org | cut -d' ' -f2)
+  DNS_LOCAL_SERVER=$(grep nameserver /etc/resolv.conf.org | awk '/nameserver [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/ {print $2}')
 fi
 
 cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
@@ -75,11 +75,11 @@ inotifyd=$!
 
 _kill_procs() {
   echo "Signal received -> killing processes"
-  
+
   kill -TERM $dnsmasq || /bin/true
   wait $dnsmasq
   rc=$?
-  
+
   kill -TERM $inotifyd || /bin/true
   wait $inotifyd
 
