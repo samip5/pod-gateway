@@ -10,6 +10,7 @@ K8S_DNS_IPS="$K8S_DNS_ips"
 # This is needed, for example, in case your CNI does
 # not add a non-default rule for the K8S addresses (Flannel does)
 NOT_ROUTED_TO_GATEWAY_CIDRS=""
+NOT_ROUTED_TO_GATEWAY_IPv6_CIDRS=""
 
 # Vxlan ID to use
 VXLAN_ID="42"
@@ -17,6 +18,7 @@ VXLAN_ID="42"
 VXLAN_PORT="0"
 # VXLAN need an /24 IP range not conflicting with K8S and local IP ranges
 VXLAN_IP_NETWORK="172.16.0"
+VXLAN_IPV6_NETWORK="fd60:ca7f:e5d8:42e8"
 # Keep a range of IPs for static assignment in nat.conf
 VXLAN_GATEWAY_FIRST_DYNAMIC_IP=20
 
@@ -28,6 +30,7 @@ VPN_BLOCK_OTHER_TRAFFIC=true
 VPN_TRAFFIC_PORT=443
 # Traffic to these IPs will be send through the K8S gateway
 VPN_LOCAL_CIDRS="10.0.0.0/8 192.168.0.0/16"
+VPN_LOCAL_IPV6_CIDRS=""
 
 # DNS queries to these domains will be resolved by K8S DNS instead of
 # the default (typcally the VPN client changes it)
@@ -55,3 +58,8 @@ SNAT_IP=""
 
 # Set the VPN MTU. It also adjust the VXLAN MTU to avoid fragmenting the package in the gateway (VXLAN-> MTU)
 VPN_INTERFACE_MTU=""
+
+# If you want IPv6, enable it
+IPV6_ENABLED=false
+# If you instead want to enable IPv4
+IPV4_ENABLED=true

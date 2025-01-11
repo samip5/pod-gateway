@@ -8,15 +8,23 @@ cat /default_config/settings.sh
 cat /config/settings.sh
 . /config/settings.sh
 
-# Make a copy of the original resolv.conf (so we can get the K8S DNS in case of a container reboot)
+# Make a copy of the original resolv.conf
 if [ ! -f /etc/resolv.conf.org ]; then
   cp /etc/resolv.conf /etc/resolv.conf.org
   echo "/etc/resolv.conf.org written"
 fi
 
-# Get K8S DNS if not set (only IPv4 addresses)
+# Get K8S DNS servers (both IPv4 and IPv6)
 if [ -z "$DNS_LOCAL_SERVER" ]; then
-  DNS_LOCAL_SERVER=$(grep nameserver /etc/resolv.conf.org | awk '/nameserver [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/ {print $2}')
+  if [ "$IPV4_ENABLED" == "true" ]; then
+    DNS_LOCAL_SERVER=$(grep nameserver /etc/resolv.conf.org | awk '/nameserver [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/ {print $2}')
+  fi
+fi
+
+if [ -z "$DNS_LOCAL_SERVER_V6" ]; then
+  if [ "$IPV6_ENABLED" == "true" ]; then
+    DNS_LOCAL_SERVER_V6=$(grep nameserver /etc/resolv.conf.org | awk '/nameserver ([0-9a-fA-F:]+:[0-9a-fA-F:]+)/ {print $2}')
+  fi
 fi
 
 cat << EOF > /etc/dnsmasq.d/pod-gateway.conf
@@ -25,8 +33,25 @@ interface=vxlan0
 bind-interfaces
 
 # Dynamic IPs assigned to PODs - we keep a range for static IPs
-dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
+EOF
 
+if [ "$IPV4_ENABLED" == "true" ]; then
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+    # IPv4 DHCP range
+    dhcp-range=${VXLAN_IP_NETWORK}.${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IP_NETWORK}.255,12h
+EOF
+fi
+
+if [ "$IPV6_ENABLED" == "true" ]; then
+  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+    # IPv6 DHCP range
+    # Using SLAAC + DHCPv6
+    enable-ra
+    dhcp-range=${VXLAN_IPV6_NETWORK}::${VXLAN_GATEWAY_FIRST_DYNAMIC_IP},${VXLAN_IPV6_NETWORK}::ffff,slaac,64,12h
+EOF
+fi
+
+cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
 # For debugging purposes, log each DNS query as it passes through
 # dnsmasq.
 log-queries
@@ -55,10 +80,21 @@ EOF
 fi
 
 for local_cidr in $DNS_LOCAL_CIDRS; do
-  cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
-  # Send ${local_cidr} DNS queries to the K8S DNS server
-  server=/${local_cidr}/${DNS_LOCAL_SERVER}
+  if [[ $local_cidr =~ ":" ]]; then
+    if [ "$IPV6_ENABLED" == "true" ] && [ -n "$DNS_LOCAL_SERVER_V6" ]; then
+      cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+    # Send ${local_cidr} DNS queries to the K8S IPv6 DNS server
+    server=/${local_cidr}/[${DNS_LOCAL_SERVER_V6}]
 EOF
+    fi
+  else
+    if [ "$IPV4_ENABLED" == "true" ] && [ -n "$DNS_LOCAL_SERVER" ]; then
+      cat << EOF >> /etc/dnsmasq.d/pod-gateway.conf
+    # Send ${local_cidr} DNS queries to the K8S IPv4 DNS server
+    server=/${local_cidr}/${DNS_LOCAL_SERVER}
+EOF
+    fi
+  fi
 done
 
 # Make a copy of /etc/resolv.conf
@@ -91,7 +127,7 @@ _kill_procs() {
 # Setup a trap to catch SIGTERM and relay it to child processes
 trap _kill_procs SIGTERM
 
-#Wait for any children to terminate
+# Wait for any children to terminate
 wait -n
 
 echo "TERMINATING"
